@@ -19,29 +19,6 @@ const JWT_OPTIONS = {
   alg: "HS256" as "HS256" | "HS384" | "HS512" | "RS256" | "RS384" | "RS512" | "PS256" | "PS384" | "PS512" | "ES256" | "ES384" | "ES512" | "EdDSA" | undefined
 }
 
-/* LOGIN */
-app.post('/login', (c) => {
-  return c.req.parseBody().then(async (body) => {
-    const token = await jwtSign({
-      monitor_id: body.monitor_id // email and password is only needed for initial validation, after that the token is the validation
-    }, JWT_OPTIONS.secret, JWT_OPTIONS.alg);
-
-    deleteCookie(c, 'propromo-chat-login')
-    await setSignedCookie(c, 'propromo-chat-login', token, JWT_SECRET, {
-      domain: '127.0.0.1:6969',
-      secure: true,
-      sameSite: 'Lax',
-      httpOnly: true,
-      path: `/chat/${body.monitor_id}`
-    })
-
-    return c.json({
-      body,
-      token
-    })
-  })
-})
-
 /* CHAT */
 /* CHAT GUARD */
 app.use('/chat/*', (c, next) => {
@@ -70,10 +47,42 @@ app.get('/chat/:monitor_id', upgradeWebSocket((c) => {
     onClose: () => {
       console.log('Connection closed')
     },
+    onOpen: () => {
+      console.log('Connection opened')
+    },
+    onError: () => {
+      console.log('Connection errored')
+    }
   }
 }))
 
-app.use('*', logger(), poweredBy(), cors())
+/* MIDDLEWARES & ROUTES */
+app.use('*', logger(), poweredBy(), cors({
+  origin: ['127.0.0.1:5173'],
+}))
 app.route("", home)
+
+/* LOGIN */
+app.post('/login', (c) => {
+  return c.req.parseBody().then(async (body) => {
+    const token = await jwtSign({
+      monitor_id: body.monitor_id // email and password is only needed for initial validation, after that the token is the validation
+    }, JWT_OPTIONS.secret, JWT_OPTIONS.alg);
+
+    deleteCookie(c, 'propromo-chat-login')
+    await setSignedCookie(c, 'propromo-chat-login', "Bearer " + token, JWT_SECRET, {
+      domain: '127.0.0.1:6969',
+      secure: true,
+      sameSite: 'Lax',
+      httpOnly: true,
+      path: `/chat/${body.monitor_id}`
+    })
+
+    return c.json({
+      body,
+      token
+    })
+  })
+})
 
 Deno.serve({ port: 6969 }, app.fetch)
