@@ -11,18 +11,13 @@ import {
 } from 'https://deno.land/x/hono@v4.2.5/helper.ts'
 import { cors } from 'https://deno.land/x/hono@v4.2.5/middleware.ts'
 
+/* CONFIGURATION */
+export const app = new Hono()
 const JWT_SECRET = "testing" // c.env.JWT_SECRET
 const JWT_OPTIONS = {
   secret: JWT_SECRET,
   alg: "HS256" as "HS256" | "HS384" | "HS512" | "RS256" | "RS384" | "RS512" | "PS256" | "PS384" | "PS512" | "ES256" | "ES384" | "ES512" | "EdDSA" | undefined
 }
-
-export const app = new Hono()/* .route("", home) */
-/* app.use('*', logger(), poweredBy()) */
-/* app.use(
-  '*',
-  cors()
-) */
 
 /* LOGIN */
 app.post('/login', (c) => {
@@ -77,5 +72,8 @@ app.get('/chat/:monitor_id', upgradeWebSocket((c) => {
     },
   }
 }))
+
+app.use('*', logger(), poweredBy(), cors())
+app.route("", home)
 
 Deno.serve({ port: 6969 }, app.fetch)
