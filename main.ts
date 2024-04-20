@@ -5,14 +5,19 @@ import { upgradeWebSocket, jwtSign } from 'https://deno.land/x/hono@v4.2.5/helpe
 import { logger, poweredBy, jwt } from 'https://deno.land/x/hono@v4.2.5/middleware.ts'
 import { home } from "./home.tsx"
 import {
-  getSignedCookie,
+  /* getSignedCookie, */
   setSignedCookie,
   deleteCookie,
 } from 'https://deno.land/x/hono@v4.2.5/helper.ts'
 import { cors } from 'https://deno.land/x/hono@v4.2.5/middleware.ts'
+import { ChatRoom } from "./Chatroom.ts";
+// import { Server as WebsocketServer } from "https://deno.land/x/socket_io@0.2.0/mod.ts";
+// import { serve as serveHttpServer } from "https://deno.land/std@0.150.0/http/server.ts";
+// INFO: Unable to attach a second server to deno serve => manual room implementation needed.
+// AND(https://github.com/socketio/socket.io/tree/main?tab=readme-ov-file#room-support): Socket.IO is not a WebSocket implementation. Although Socket.IO indeed uses WebSocket as a transport when possible, it adds some metadata to each packet: the packet type, the namespace and the ack id when a message acknowledgement is needed. That is why a WebSocket client will not be able to successfully connect to a Socket.IO server, and a Socket.IO client will not be able to connect to a WebSocket server (like ws://echo.websocket.org) either. Please see the protocol specification here.
 
 /* CONFIGURATION */
-export const app = new Hono()
+const app = new Hono()
 const JWT_SECRET = "testing" // c.env.JWT_SECRET
 const JWT_OPTIONS = {
   secret: JWT_SECRET,
@@ -37,24 +42,32 @@ app.get('/chat/info/payload', (c) => {
 })
 
 /* CHAT ROOM */
+const chatRooms: Map<string, ChatRoom> = new Map();
 app.get('/chat/:monitor_id', upgradeWebSocket((c) => {
-  const monitor_id = c.req.param('monitor_id')
+  const monitor_id = c.req.param('monitor_id');
+
+  let chatRoom = chatRooms.get(monitor_id);
+  if (!chatRoom) {
+    chatRoom = new ChatRoom(monitor_id);
+    chatRooms.set(monitor_id, chatRoom);
+  }
 
   return {
-    onMessage(event, ws) {
-      ws.send(event.data.toString() + " in " + monitor_id)
+    onMessage: (event) => {
+      chatRoom.onMessage(event);
     },
     onClose: () => {
-      console.log('Connection closed')
+      chatRoom.onClose();
+      chatRooms.delete(monitor_id);
     },
-    onOpen: () => {
-      console.log('Connection opened')
+    onOpen: (_event, ws) => {
+      chatRoom.onOpen(ws);
     },
     onError: () => {
-      console.log('Connection errored')
+      chatRoom.onError();
     }
   }
-}))
+}));
 
 /* MIDDLEWARES & ROUTES */
 app.use('*', logger(), poweredBy(), cors({
@@ -85,4 +98,4 @@ app.post('/login', (c) => {
   })
 })
 
-Deno.serve({ port: 6969 }, app.fetch)
+Deno.serve({ port: 6969 }, app.fetch);
