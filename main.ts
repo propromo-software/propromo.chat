@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 import { Hono } from 'https://deno.land/x/hono@v4.2.5/mod.ts'
 import { upgradeWebSocket, jwtSign } from 'https://deno.land/x/hono@v4.2.5/helper.ts'
 import { logger, poweredBy, jwt } from 'https://deno.land/x/hono@v4.2.5/middleware.ts' // https://hono.dev/middleware/builtin/jwt
@@ -7,6 +9,7 @@ import {
   setSignedCookie,
   deleteCookie,
 } from 'https://deno.land/x/hono@v4.2.5/helper.ts'
+import { cors } from 'https://deno.land/x/hono@v4.2.5/middleware.ts'
 
 const JWT_SECRET = "testing"
 const JWT_OPTIONS = {
@@ -16,6 +19,10 @@ const JWT_OPTIONS = {
 
 export const app = new Hono().route("", home)
 app.use('*', logger(), poweredBy())
+app.use(
+  '*',
+  cors()
+)
 
 /* LOGIN */
 app.post('/login', (c) => {
