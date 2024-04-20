@@ -1,4 +1,6 @@
 /** @jsx jsx */
+/** @jsxFrag Fragment */
+
 import { Hono } from 'https://deno.land/x/hono@v4.2.5/mod.ts'
 import { logger, poweredBy, jsx, serveStatic } from 'https://deno.land/x/hono@v4.2.5/middleware.ts'
 import { html } from "https://deno.land/x/hono@v4.2.5/helper/html/index.ts";
