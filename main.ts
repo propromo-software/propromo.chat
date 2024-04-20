@@ -14,6 +14,7 @@ import {
 } from "https://deno.land/x/hono@v4.2.5/middleware.ts";
 import { ChatRoom } from "./Chatroom.ts";
 import { home } from "./home.tsx";
+import { db } from "./database.ts";
 
 //#region Why Websockets suck (https://github.com/whatwg/websockets/issues/16)
 // Why not socket.io? (https://github.com/socketio/socket.io/tree/main?tab=readme-ov-file#room-support):
@@ -162,12 +163,36 @@ app.route("", home);
 /* AUTHENTICATION ENDPOINT */
 app.post("/login", (c) => {
   return c.req.parseBody().then(async (body) => {
-    // TODO: check if user with body.password and body.email has access to the monitor, if not return error
+    const email = body?.email ?? "";
+    const password = body?.password ?? "";
+    const monitor_id = body?.monitor_id ?? "";
+
+    if (!email || !password || !monitor_id) {
+      return c.text("Email, password and monitor-id are required.", 400);
+    }
+
+    const users_that_match = await db.queryObject(
+      `SELECT user_id FROM monitor_user mu 
+      JOIN users u ON mu.user_id = u.id 
+      JOIN monitors m ON mu.monitor_id = m.id 
+      WHERE u.email = $1 
+      AND u.password = $2
+      AND m.monitor_hash = $3`,
+      [email, password, monitor_id],
+    );
+    const user_has_access = users_that_match.rows.length === 1;
+
+    if (!user_has_access) {
+      return c.text(
+        "Unauthorized. You do not have access to that monitor.",
+        401,
+      );
+    }
 
     const now = Math.floor(Date.now() / 1000);
     const token = await jwtSign(
       {
-        monitor_id: body.monitor_id, // email and password is only needed for initial validation, after that the token is the validation
+        monitor_id,
         exp: now + 60 * 5,
         nbf: now,
         iat: now,

@@ -7,6 +7,7 @@ import { html } from "https://deno.land/x/hono@v4.2.5/helper/html/index.ts";
 
 type Props = {
     title: string
+    // biome-ignore lint/suspicious/noExplicitAny: Sometimes I want my any :)
     children?: any
 }
 
@@ -38,13 +39,13 @@ const LogInForm = () => {
   return (
     <form action="/login" method="post">
       <label htmlFor="email">Email:</label>
-      <input type="email" id="email" name="email" />
+      <input type="email" id="email" name="email" value={"j.froe@gmx.at"} />
       <br />
       <label htmlFor="password">Password:</label>
-      <input type="password" id="password" name="password" />
+      <input type="password" id="password" name="password" value={"password"} />
       <br />
       <label htmlFor="monitor_id">Monitor ID:</label>
-      <input type="text" id="monitor_id" name="monitor_id" />
+      <input type="text" id="monitor_id" name="monitor_id" value={"w32tgse"} />
       <br />
       <button type="submit">Submit</button>
     </form>
