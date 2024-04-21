@@ -127,7 +127,6 @@
     "https://deno.land/x/hono@v4.2.5/helper/streaming/stream.ts": "a0eeb52395313ecb293edd1294dc21538b024ce1acc4745671f9f1548825cba2",
     "https://deno.land/x/hono@v4.2.5/helper/streaming/text.ts": "bd8d1973feeabca63016cf638309aaeb829a914bf139a26120ca5c85e2b4ce96",
     "https://deno.land/x/hono@v4.2.5/helper/testing/index.ts": "2684779dc908af65c8dcdbe8841c076c316f37a88ee05293ee177ec801d0062d",
-    "https://deno.land/x/hono@v4.2.5/helper/websocket/index.ts": "d72e052f0b6bfd98c26c4348ad499b493b2baf24bfdaae81b399453dcdad1483",
     "https://deno.land/x/hono@v4.2.5/hono-base.ts": "2a508c026687a1fc12c0458e100e66d5d72e17f6e6532b407d19663aa7300327",
     "https://deno.land/x/hono@v4.2.5/hono.ts": "23edd0140bf0bd5a68c14ae96e5856a5cec6b844277e853b91025e91ea74f416",
     "https://deno.land/x/hono@v4.2.5/http-exception.ts": "cd387c6f7357db375ac3375f0346c6da80b46193b661881f660d6b15293fc086",
