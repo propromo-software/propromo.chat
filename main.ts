@@ -57,8 +57,8 @@ import {
 const app = new Hono();
 
 const JWT_OPTIONS = {
-  secret: JWT_PRIVATE_KEY,
-  public: JWT_PUBLIC_KEY,
+  secret: JWT_PRIVATE_KEY ?? "",
+  public: JWT_PUBLIC_KEY ?? "",
   alg: "HS256" as
     | "HS256"
     | "HS384"
