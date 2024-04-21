@@ -15,7 +15,7 @@ COPY deps.ts .
 RUN deno cache deps.ts
 
 # These steps will be re-run upon each file change in your working directory:
-COPY .env.example .env
+# COPY .env.example .env # only for testing
 COPY . .
 
 # Compile the main app so that it doesn't need to be compiled each startup/entry.
