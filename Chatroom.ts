@@ -9,15 +9,17 @@ export class ChatRoom {
     monitor_id: string;
     clients: Set<WSContext>;
 
-    broadcast(data: string): void {
+    broadcast(data: string, sender?: WSContext): void {
         for (const client of this.clients) {
-            client.send(data);
+            if (client !== sender) {
+                client.send(data);
+            }
         }
     }
 
-    onMessage(event: MessageEvent): void {
-        const message = `${event.data} in ${this.monitor_id}`;
-        this.broadcast(message);
+    onMessage(event: MessageEvent, sender?: WSContext): void {
+        const message = event.data;
+        this.broadcast(message, sender);
     }
 
     onOpen(ws: WSContext): void {

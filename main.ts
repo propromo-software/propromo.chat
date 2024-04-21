@@ -100,6 +100,7 @@ app.get("/chat/:monitor_id", async (c) => {
 
     if (payload.monitor_id !== monitor_id || payload.iss !== "propromo.chat") {
       // console.error(payload);
+
       return c.text(
         "Auth token is invalid. Monitor ID does not match. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login.",
         401,
@@ -107,6 +108,7 @@ app.get("/chat/:monitor_id", async (c) => {
     }
   } catch (error) {
     // console.error(error);
+
     return c.text(
       `Auth token is invalid. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login. (${error})`,
       401,
@@ -116,6 +118,8 @@ app.get("/chat/:monitor_id", async (c) => {
   if (!jwts.includes(auth)) {
     jwts.push(auth);
   } else {
+    // console.error("Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.");
+
     return c.text(
       "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
       401,
@@ -130,8 +134,8 @@ app.get("/chat/:monitor_id", async (c) => {
     }
 
     return {
-      onMessage: (event: MessageEvent) => {
-        chatRoom.onMessage(event);
+      onMessage: (event: MessageEvent, ws: WSContext) => {
+        chatRoom.onMessage(event, ws);
       },
       onClose: () => {
         chatRoom.onClose();
