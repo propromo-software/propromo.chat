@@ -1,5 +1,7 @@
 # Propromo Chat
 
+https://s0qb102l.status.cron-job.org
+
 ## Description
 
 A chat application for Propromo.
