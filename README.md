@@ -6,8 +6,16 @@ A chat application for Propromo.
 
 ### Server Commands
 
+#### Running
+
 ```
 deno task start
+```
+
+#### Building
+
+```
+docker build -t app . && docker run -it -p 1993:1993 app
 ```
 
 ### Keys

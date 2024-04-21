@@ -1,4 +1,4 @@
-import type { WSContext } from "https://deno.land/x/hono@v4.2.5/helper/websocket/index.ts";
+import type { WSContext } from "./deps.ts";
 
 export class ChatRoom {
     constructor(monitor_id: string) {

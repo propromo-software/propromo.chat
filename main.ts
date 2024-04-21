@@ -1,21 +1,24 @@
 /// <reference lib="deno.ns" />
 
-import { Hono } from "https://deno.land/x/hono@v4.2.5/mod.ts";
-import type { WSContext } from "https://deno.land/x/hono@v4.2.5/helper/websocket/index.ts";
-import {
-  jwtSign,
-  jwtVerify,
-  upgradeWebSocket,
-} from "https://deno.land/x/hono@v4.2.5/helper.ts";
-import {
-  logger,
-  poweredBy,
-  cors,
-} from "https://deno.land/x/hono@v4.2.5/middleware.ts";
 import { ChatRoom } from "./Chatroom.ts";
 import { home } from "./home.tsx";
 import { db } from "./database.ts";
-import { JWT_PRIVATE_KEY, JWT_PUBLIC_KEY, DEV_MODE, PORT } from "./environment.ts";
+import {
+  JWT_PRIVATE_KEY,
+  JWT_PUBLIC_KEY,
+  DEV_MODE,
+  PORT,
+} from "./environment.ts";
+import {
+  Hono,
+  type WSContext,
+  cors,
+  jwtSign,
+  jwtVerify,
+  logger,
+  poweredBy,
+  upgradeWebSocket,
+} from "./deps.ts";
 
 //#region Why Websockets suck (https://github.com/whatwg/websockets/issues/16)
 // Why not socket.io? (https://github.com/socketio/socket.io/tree/main?tab=readme-ov-file#room-support):
