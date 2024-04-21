@@ -11,11 +11,11 @@ export let DATABASE_URL: string | undefined = env.DATABASE_URL;
 if (!JWT_PRIVATE_KEY ||
     (JWT_PRIVATE_KEY && JWT_PRIVATE_KEY.trim().length === 0) ||
     !JWT_PUBLIC_KEY ||
-    (JWT_PUBLIC_KEY && JWT_PRIVATE_KEY.trim().length === 0) ||
+    (JWT_PUBLIC_KEY && JWT_PUBLIC_KEY.trim().length === 0) ||
     !DATABASE_URL ||
     (DATABASE_URL && DATABASE_URL.trim().length === 0)
 ) {
-    JWT_PRIVATE_KEY = Deno.env.get("JWT_SECRET");
+    JWT_PRIVATE_KEY = Deno.env.get("JWT_PRIVATE_KEY");
     JWT_PUBLIC_KEY = Deno.env.get("JWT_PUBLIC_KEY");
     DATABASE_URL = Deno.env.get("DATABASE_URL");
 
