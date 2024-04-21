@@ -1,6 +1,8 @@
 import { load } from "./deps.ts";
 
-const env = await load();
+const env = await load({
+    allowEmptyValues: true // so that it does not crash, if there is no .env file, and the environment variables can be used
+});
 export const DEV_MODE = env.DEV_MODE === "true";
 export const PORT = Number.parseInt(env.PORT ?? "6969");
 export let JWT_PRIVATE_KEY: string | undefined = env.JWT_PRIVATE_KEY;
