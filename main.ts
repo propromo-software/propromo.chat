@@ -15,6 +15,7 @@ import {
 import { ChatRoom } from "./Chatroom.ts";
 import { home } from "./home.tsx";
 import { db } from "./database.ts";
+import { JWT_PRIVATE_KEY, JWT_PUBLIC_KEY, DEV_MODE, PORT } from "./environment.ts";
 
 //#region Why Websockets suck (https://github.com/whatwg/websockets/issues/16)
 // Why not socket.io? (https://github.com/socketio/socket.io/tree/main?tab=readme-ov-file#room-support):
@@ -51,8 +52,7 @@ import { db } from "./database.ts";
 
 /* CONFIGURATION */
 const app = new Hono();
-const JWT_PRIVATE_KEY = "testing"; // c.env.JWT_SECRET
-const JWT_PUBLIC_KEY = "testing";
+
 const JWT_OPTIONS = {
   secret: JWT_PRIVATE_KEY,
   public: JWT_PUBLIC_KEY,
@@ -76,8 +76,10 @@ const JWT_OPTIONS = {
 /* CHAT */
 
 /* CHATROOM */
+// Maybe replace with a redis database?
 const chatRooms: Map<string, ChatRoom> = new Map();
 const jwts: string[] = [];
+
 app.get("/chat/:monitor_id", async (c) => {
   const monitor_id = c.req.param("monitor_id");
   const auth = c.req.query("auth");
@@ -99,7 +101,7 @@ app.get("/chat/:monitor_id", async (c) => {
     const payload = await jwtVerify(auth, JWT_OPTIONS.public, JWT_OPTIONS.alg);
 
     if (payload.monitor_id !== monitor_id || payload.iss !== "propromo.chat") {
-      // console.error(payload);
+      if (DEV_MODE) console.error(payload);
 
       return c.text(
         "Auth token is invalid. Monitor ID does not match. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login.",
@@ -107,7 +109,7 @@ app.get("/chat/:monitor_id", async (c) => {
       );
     }
   } catch (error) {
-    // console.error(error);
+    if (DEV_MODE) console.error(error);
 
     return c.text(
       `Auth token is invalid. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login. (${error})`,
@@ -118,7 +120,10 @@ app.get("/chat/:monitor_id", async (c) => {
   if (!jwts.includes(auth)) {
     jwts.push(auth);
   } else {
-    // console.error("Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.");
+    if (DEV_MODE)
+      console.error(
+        "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
+      );
 
     return c.text(
       "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
@@ -165,7 +170,11 @@ app.use(
 app.route("", home);
 
 /* AUTHENTICATION ENDPOINT */
-async function generateJWT(email: string | File | (string | File)[], password: string | File | (string | File)[], monitor_id: string | File | (string | File)[]): Promise<string> {
+async function generateJWT(
+  email: string | File | (string | File)[],
+  password: string | File | (string | File)[],
+  monitor_id: string | File | (string | File)[],
+): Promise<string> {
   const users_that_match = await db.queryObject(
     `SELECT user_id FROM monitor_user mu 
     JOIN users u ON mu.user_id = u.id 
@@ -215,15 +224,20 @@ app.post("/login", async (c) => {
       try {
         return c.text(await generateJWT(email, password, monitor_id));
       } catch (error) {
-        return c.text(
-          error.message,
-          401,
-        );
+        return c.text(error.message, 401);
       }
     });
   } catch {
     const body = await c.req.json();
-    const { email, password, monitor_id }: { email: string | undefined; password: string | undefined; monitor_id: string | undefined } = body;
+    const {
+      email,
+      password,
+      monitor_id,
+    }: {
+      email: string | undefined;
+      password: string | undefined;
+      monitor_id: string | undefined;
+    } = body;
 
     if (!email || !password || !monitor_id) {
       return c.text(
@@ -235,12 +249,9 @@ app.post("/login", async (c) => {
     try {
       return c.text(await generateJWT(email, password, monitor_id));
     } catch (error) {
-      return c.text(
-        error.message,
-        401,
-      );
+      return c.text(error.message, 401);
     }
   }
 });
 
-Deno.serve({ port: 6969 }, app.fetch);
+Deno.serve({ port: PORT }, app.fetch);
