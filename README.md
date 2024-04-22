@@ -37,6 +37,10 @@ _Chat connections stay open till they are closed by the client, just the token e
 deno task start
 ```
 
+```
+docker-compose -f redis.yml up
+```
+
 #### Building
 
 ```

@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:6.2-alpine
+    container_name: propromo-chat-persistence-storage
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  cache:
+    driver: local
