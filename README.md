@@ -2,6 +2,11 @@
 
 https://s0qb102l.status.cron-job.org
 
+## Deployments
+
+* https://chat-app-latest-m6ht.onrender.com
+* https://propromo-chat-c575fve9ssfr.deno.dev
+
 ## Description
 
 A chat application for Propromo.
