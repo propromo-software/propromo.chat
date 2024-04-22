@@ -81,10 +81,20 @@ const JWT_OPTIONS = {
 /* CHATROOM */
 // Maybe replace with a redis database?
 const chatRooms: Map<string, ChatRoom> = new Map();
-const jwts: string[] = [];
+const usersChatting: string[] = [];
+
+type JWT_PAYLOAD = {
+  monitor_id: string,
+  email: string,
+  exp: number,
+  nbf: number,
+  iat: number,
+  iss: string,
+};
 
 app.get("/chat/:monitor_id", async (c) => {
   const monitor_id = c.req.param("monitor_id");
+  let payload: JWT_PAYLOAD | undefined;
   const auth = c.req.query("auth");
 
   // I think this is the best solution to authenticate, after cookies, and they don't work well together with postman :/.
@@ -101,9 +111,9 @@ app.get("/chat/:monitor_id", async (c) => {
   }
 
   try {
-    const payload = await jwtVerify(auth, JWT_OPTIONS.public, JWT_OPTIONS.alg);
+    payload = await jwtVerify(auth, JWT_OPTIONS.public, JWT_OPTIONS.alg);
 
-    if (payload.monitor_id !== monitor_id || payload.iss !== "propromo.chat") {
+    if (payload && (payload.monitor_id !== monitor_id || payload.iss !== "propromo.chat")) {
       if (DEV_MODE) console.error(payload);
 
       return c.text(
@@ -120,8 +130,8 @@ app.get("/chat/:monitor_id", async (c) => {
     );
   }
 
-  if (!jwts.includes(auth)) {
-    jwts.push(auth);
+  if (!usersChatting.includes(payload?.email as string)) {
+    usersChatting.push(payload?.email as string);
   } else {
     if (DEV_MODE)
       console.error(
@@ -136,21 +146,23 @@ app.get("/chat/:monitor_id", async (c) => {
 
   const createEvents = () => {
     let chatRoom = chatRooms.get(monitor_id);
+    const email = payload?.email;
+
     if (!chatRoom) {
       chatRoom = new ChatRoom(monitor_id);
       chatRooms.set(monitor_id, chatRoom);
     }
 
     return {
-      onMessage: (event: MessageEvent, ws: WSContext) => {
-        chatRoom.onMessage(event, ws);
+      onMessage: async (event: MessageEvent, ws: WSContext) => {
+        await chatRoom.onMessage(event, { email, ws });
       },
       onClose: () => {
         chatRoom.onClose();
         chatRooms.delete(monitor_id);
       },
-      onOpen: (_event: Event, ws: WSContext) => {
-        chatRoom.onOpen(ws);
+      onOpen: async (_event: Event, ws: WSContext) => {
+        await chatRoom.onOpen(ws);
       },
       onError: () => {
         chatRoom.onError();
@@ -197,6 +209,7 @@ async function generateJWT(
   const token = await jwtSign(
     {
       monitor_id,
+      email,
       exp: now + 60 * 5,
       nbf: now,
       iat: now,

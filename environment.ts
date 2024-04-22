@@ -8,6 +8,7 @@ export let PORT = Number.parseInt(env.PORT ?? "6969");
 export let JWT_PRIVATE_KEY: string | undefined = env.JWT_PRIVATE_KEY;
 export let JWT_PUBLIC_KEY: string | undefined = env.JWT_PUBLIC_KEY;
 export let DATABASE_URL: string | undefined = env.DATABASE_URL;
+export let CHAT_STORAGE_URL: string | undefined = env.CHAT_STORAGE_URL;
 
 // Check for variables in the process, if there is no .env file present
 if (!JWT_PRIVATE_KEY ||
@@ -15,11 +16,14 @@ if (!JWT_PRIVATE_KEY ||
     !JWT_PUBLIC_KEY ||
     (JWT_PUBLIC_KEY && JWT_PUBLIC_KEY.trim().length === 0) ||
     !DATABASE_URL ||
-    (DATABASE_URL && DATABASE_URL.trim().length === 0)
+    (DATABASE_URL && DATABASE_URL.trim().length === 0) ||
+    !CHAT_STORAGE_URL ||
+    (CHAT_STORAGE_URL && CHAT_STORAGE_URL.trim().length === 0)
 ) {
     JWT_PRIVATE_KEY = Deno.env.get("JWT_PRIVATE_KEY");
     JWT_PUBLIC_KEY = Deno.env.get("JWT_PUBLIC_KEY");
     DATABASE_URL = Deno.env.get("DATABASE_URL");
+    CHAT_STORAGE_URL = Deno.env.get("CHAT_STORAGE_URL");
 
     if (!JWT_PRIVATE_KEY) {
         throw new Error("JWT_SECRET is not set");
@@ -31,6 +35,10 @@ if (!JWT_PRIVATE_KEY ||
 
     if (!DATABASE_URL) {
         throw new Error("DATABASE_URL is not set");
+    }
+
+    if (!CHAT_STORAGE_URL) {
+        throw new Error("CHAT_STORAGE_URL is not set");
     }
 }
 
