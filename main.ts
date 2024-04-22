@@ -257,4 +257,4 @@ app.post("/login", async (c) => {
   }
 });
 
-Deno.serve({ port: PORT }, app.fetch);
+Deno.serve({ port: PORT, hostname: "0.0.0.0" }, app.fetch);
