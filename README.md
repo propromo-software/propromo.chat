@@ -1,11 +1,11 @@
 # Propromo Chat
 
-https://s0qb102l.status.cron-job.org
+<https://s0qb102l.status.cron-job.org>
 
 ## Deployments
 
-* https://chat-app-latest-m6ht.onrender.com
-* https://propromo-chat-c575fve9ssfr.deno.dev
+* <https://chat-app-latest-m6ht.onrender.com>
+* <https://propromo-chat-c575fve9ssfr.deno.dev>
 
 ## Description
 
@@ -29,21 +29,28 @@ _Chat connections stay open till they are closed by the client, just the token e
 
 > INFO: `./dummy/test.sql` and `/` can be used for testing purposes.
 
+#### API Collections
+
+##### Poor support for WebSocket Connections in Postman
+
+<https://community.postman.com/t/websocket-and-rest-requests-in-same-collection/55471>
+<https://github.com/postmanlabs/postman-app-support/issues/11252>
+
 ### Server Commands
 
 #### Running
 
-```
+```bash
 deno task start
 ```
 
-```
+```bash
 docker-compose -f redis.yml up
 ```
 
 #### Building
 
-```
+```bash
 docker build -t app . && docker run -it -p 1993:1993 app
 ```
 
@@ -57,7 +64,7 @@ Use `keys.sh` or one of the commands.
 
 Generates a private key with a 4096-bit RSA key and SHA-512 digest, but it does not generate a certificate. The private key is encrypted with AES-256 and output to the private.pem file.
 
-```
+```bash
 openssl genpkey -algorithm RSA -out private.pem -aes256 -pkeyopt rsa_keygen_bits:4096 -pkeyopt digest:sha512
 ```
 
@@ -65,13 +72,13 @@ or
 
 Generates a self-signed X.509 certificate with a 4096-bit RSA key and SHA-512 digest. The private key is encrypted with the specified digest algorithm and output to the private.pem file.
 
-```
+```bash
 openssl req -x509 -newkey rsa:4096 -keyout private.pem -out private.pem -days 3650 -nodes -subj '/CN=propromo.chat' -sha512
 ```
 
 ###### Check
 
-```
+```bash
 openssl rsa -in private.pem -check
 ```
 
@@ -79,7 +86,7 @@ openssl rsa -in private.pem -check
 
 The public key is not generated separately, but it can be extracted from the private key using the `openssl rsa` command with the `-pubout` option, like this:
 
-```
+```bash
 openssl rsa -in private.pem -pubout -outform PEM -out public.pem
 ```
 
@@ -87,12 +94,12 @@ or
 
 The public key is embedded in the self-signed X.509 certificate that is generated along with the private key.
 
-```
+```bash
 openssl x509 -in private.pem -pubkey -noout > public.pem
 ```
 
 #### HS256 (for development)
 
-```
+```bash
 openssl rand -base64 32
 ```
