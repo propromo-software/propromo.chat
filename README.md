@@ -36,6 +36,10 @@ _Chat connections stay open till they are closed by the client, just the token e
 <https://community.postman.com/t/websocket-and-rest-requests-in-same-collection/55471>
 <https://github.com/postmanlabs/postman-app-support/issues/11252>
 
+##### Path Parameters do not work in Insomnia
+
+<https://github.com/Kong/insomnia/issues/7314>
+
 ### Server Commands
 
 #### Running
