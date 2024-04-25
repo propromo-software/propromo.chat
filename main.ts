@@ -130,8 +130,13 @@ app.get("/chat/:monitor_id", async (c) => {
     );
   }
 
-  if (!usersChatting.includes(payload?.email as string)) {
-    usersChatting.push(payload?.email as string);
+  const userPayload = JSON.stringify({
+    email: payload?.email,
+    monitor_id: payload?.monitor_id
+  });
+
+  if (!usersChatting.includes(userPayload)) {
+    usersChatting.push(userPayload);
   } else {
     if (DEV_MODE)
       console.error(
