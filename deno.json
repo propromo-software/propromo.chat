@@ -1,5 +1,11 @@
 {
 	"tasks": {
-		"start": "deno run --allow-net --allow-read --allow-env main.ts"
+		"start": "deno run --allow-net --allow-read --allow-env main.ts",
+		"dev": "deno task start:database && deno task start:chat-storage",
+		"create:database": "docker-compose -f postgres.yml up -d",
+		"fill:database": "echo goto propromo.rest and execute fill:db",
+		"create:chat-storage": "docker-compose -f redis.yml up -d",
+		"start:database": "docker start propromo-database",
+		"start:chat-storage": "docker start propromo-chat-persistence-storage"
 	}
 }

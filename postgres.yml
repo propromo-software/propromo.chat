@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+    postgres:
+        image: postgres:12.18
+        container_name: propromo-database
+        environment:
+            POSTGRES_DB: propromo
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: propromo
+        ports:
+            - "54320:5432"
