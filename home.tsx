@@ -1,32 +1,8 @@
 /** @jsx jsx */
 /** @jsxFrag Fragment */
 
-import { html, jsx, logger, poweredBy, serveStatic, Hono } from "./deps.ts";
-
-type Props = {
-	title: string;
-	// biome-ignore lint/suspicious/noExplicitAny: Sometimes I want my any :)
-	children?: any;
-};
-
-const Layout = (props: Props) => html`<!DOCTYPE html>
-  <html>
-    <link
-      type="image/png"
-      rel="icon"
-      href="/favicon.png"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-    />
-    <head>
-      <title>${props.title}</title>
-    </head>
-    <body>
-      ${props.children}
-    </body>
-  </html>`;
+import { jsx, logger, poweredBy, serveStatic, Hono } from "./deps.ts";
+import { Layout } from "./layout.tsx";
 
 export const home = new Hono();
 
@@ -35,7 +11,7 @@ home.all("/favicon.png", serveStatic({ path: "./public/favicon.png" }));
 
 const LogInForm = () => {
 	return (
-		<form action="/login" method="post">
+		<form action="/login-view" method="post">
 			<label htmlFor="email">Email:</label>
 			<input type="email" id="email" name="email" value={"j.froe@gmx.at"} />
 			<br />
@@ -59,6 +35,6 @@ home.get("", (c) => {
 			<main class="container">
 				<LogInForm />
 			</main>
-		</Layout>,
+		</Layout>
 	);
 });

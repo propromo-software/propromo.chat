@@ -19,6 +19,8 @@ import {
   poweredBy,
   upgradeWebSocket,
 } from "./deps.ts";
+import { Chat } from "./chat.tsx";
+import { render } from "./deps.ts";
 
 //#region Why Websockets suck (https://github.com/whatwg/websockets/issues/16)
 // Why not socket.io? (https://github.com/socketio/socket.io/tree/main?tab=readme-ov-file#room-support):
@@ -150,7 +152,8 @@ app.get("/chat/:monitor_id", async (c) => {
   }
 
   const createEvents = () => {
-    let chatRoom = chatRooms.get(monitor_id);
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    let chatRoom = chatRooms.get(monitor_id)!; // ! needed, because deno-ts doesn't see, that chatRooms is created if it doesn't exist...
     const email = payload?.email;
 
     if (!chatRoom) {
@@ -275,4 +278,35 @@ app.post("/login", async (c) => {
   }
 });
 
+let ChatNode = Chat({ token: "", monitorId: "" });
+app.post("/login-view", async (c) => {
+  const body = await c.req.parseBody();
+
+  const response = await app.request('/login', {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: body.email,
+      password: body.password,
+      monitor_id: body.monitor_id
+    }),
+  });
+
+  const token = await response.text();
+
+  if (response.ok) {
+    const monitorId = body.monitor_id as string;
+    ChatNode = Chat({ token, monitorId });
+
+    return c.html(ChatNode);
+  }
+
+  return c.text(token);
+});
+
 Deno.serve({ port: PORT, hostname: "0.0.0.0" }, app.fetch);
+
+// const root = document.getElementById('root') as HTMLElement;
+// render(ChatNode, root);

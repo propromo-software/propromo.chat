@@ -14,6 +14,8 @@ export {
     jsx,
     serveStatic,
 } from "https://deno.land/x/hono@v4.2.5/middleware.ts";
+export { useState, useEffect } from 'https://deno.land/x/hono@v4.2.5/jsx/index.ts';
+export { render } from 'https://deno.land/x/hono@v4.2.5/jsx/dom/index.ts';
 export { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
 export { parseURL, connect } from "https://deno.land/x/redis@v0.32.3/mod.ts";
 export { load } from "https://deno.land/std@0.223.0/dotenv/mod.ts";
