@@ -1,4 +1,4 @@
-import { html } from "./deps.ts";
+import { html } from "../../deps.ts";
 
 type Props = {
 	title: string;

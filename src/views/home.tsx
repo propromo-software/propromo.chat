@@ -1,7 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag Fragment */
 
-import { jsx, logger, poweredBy, serveStatic, Hono } from "./deps.ts";
+import { jsx, logger, poweredBy, serveStatic, Hono } from "../../deps.ts";
 import { Layout } from "./layout.tsx";
 
 export const home = new Hono();

@@ -1,4 +1,4 @@
-import { load } from "./deps.ts";
+import { load } from "../deps.ts";
 
 const env = await load({
     allowEmptyValues: true // so that it does not crash, if there is no .env file, and the environment variables can be used

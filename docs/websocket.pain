@@ -1,0 +1,32 @@
+Why Websockets suck (https://github.com/whatwg/websockets/issues/16)
+
+Why not socket.io? (https://github.com/socketio/socket.io/tree/main?tab=readme-ov-file#room-support):
+Socket.IO is not a WebSocket implementation.
+Although Socket.IO indeed uses WebSocket as a transport when possible, it adds some metadata to each packet:
+the packet type, the namespace and the ack id when a message acknowledgement is needed.
+That is why a WebSocket client will not be able to successfully connect to a Socket.IO server,
+and a Socket.IO client will not be able to connect to a WebSocket server (like ws://echo.websocket.org) either. Please see the protocol specification here.
+
+Why no authentication with cookies? - https://significa.co/blog/using-websockets-with-cookie-based-authentication, basically the only "good" option, but it sucks.
+WebSockets are not subject to same-origin policy (because apparently every little thing about WebSockets has to be awful)
+and allowing cookies would leave you wide open to CSRF attacks.
+
+Why not open a WebSocket without authenticating, and authenticate in it?
+And then send auth information over WebSocket prior to doing anything else.
+This in theory sounds logical (and is advised by the browser vendors),
+but falls apart given just a cursory thought. The server is made to implement an awkward,
+highly stateful and entirely custom authentication mechanism that doesn't play well with anything else,
+on top of either having to maintain a persistent connection with a client who refuses to authenticate,
+leaving a door wide open for denial of service attacks,
+or getting into a whole new rabbit whole of enforcing rigorous time outs to prevent malicious behavior.
+
+Postman can somehow send headers for the handshake, the Websocket API can not do that.
+Maybe it smuggles the token?
+Since the only header a browser will let you control is Sec-WebSocket-Protocol, you can abuse it to emulate any other header.
+Interestingly (or rather comically), this is what Kubernetes is doing. In short, you append whatever you need for authentication
+as an extra supported subprotocol inside Sec-WebSocket-Protocol: var ws = new WebSocket("ws://example.com/path", ["realProtocol", "yourAccessTokenOrSimilar"]);
+But that can not be the case since honos jwt middleware got it from a header with the name Authorization, which is a header that can only be set for http,
+meaning Postman somehow figured out how to set it in the handshake.
+Postman doesn't allow this, that is why I don't wan't to use it. Without a api client testing software, it will be a pain. (https://github.com/whatwg/websockets/issues/16#issuecomment-1997491158)
+
+What I chose: Short lived jwt tokens, that can be obtained at /login, and only work for 5 Minutes and for one time.

@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:6.2-alpine
+    container_name: propromo-chat-persistence-storage
+    restart: always
+    ports:
+      - "6379:6379"
+  postgres:
+    image: postgres:12.18
+    container_name: propromo-database
+    environment:
+        POSTGRES_DB: propromo
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: propromo
+    ports:
+        - "54320:5432"
+
+volumes:
+  cache:
+    driver: local

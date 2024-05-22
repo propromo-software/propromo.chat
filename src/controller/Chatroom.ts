@@ -1,5 +1,5 @@
-import { type WSContext, parseURL, connect, v5 } from "./deps.ts";
-import { CHAT_STORAGE_URL } from "./environment.ts";
+import { type WSContext, parseURL, connect, v5 } from "../../deps.ts";
+import { CHAT_STORAGE_URL } from "../environment.ts";
 
 const { generate } = v5;
 const redisOptions = parseURL(CHAT_STORAGE_URL as string);

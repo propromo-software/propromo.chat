@@ -24,7 +24,7 @@
 */
 
 import type { FC } from 'https://deno.land/x/hono@v4.3.1/jsx/index.ts';
-import { jsx, useState, useEffect, render } from "./deps.ts";
+import { jsx, useState, useEffect, render } from "../../deps.ts";
 import { Layout } from "./layout.tsx";
 
 interface ChatFormProps {
