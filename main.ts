@@ -119,8 +119,8 @@ app.get("/chat/:monitor_id", async (c) => {
   }
 
   const createEvents = () => {
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
-    let chatRoom = chatRooms.get(monitor_id)!; // ! needed, because deno-ts doesn't see, that chatRooms is created if it doesn't exist...
+    // biome-ignore lint/style/noNonNullAssertion: ! needed, because deno-ts doesn't see, that chatRooms is created if it doesn't exist...
+    let chatRoom = chatRooms.get(monitor_id)!;
     const email = payload?.email;
 
     if (!chatRoom) {
@@ -153,9 +153,7 @@ app.use(
   "*",
   logger(),
   poweredBy(),
-  cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
-  }),
+  cors(),
 );
 app.route("", home);
 
