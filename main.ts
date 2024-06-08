@@ -104,7 +104,7 @@ app.get("/chat/:monitor_id", async (c) => {
     monitor_id: payload?.monitor_id
   });
 
-  if (!usersChatting.includes(userPayload)) {
+  /* if (!usersChatting.includes(userPayload)) { // TODO: implement proper security
     usersChatting.push(userPayload);
   } else {
     if (DEV_MODE)
@@ -116,7 +116,7 @@ app.get("/chat/:monitor_id", async (c) => {
       "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
       401,
     );
-  }
+  } */
 
   const createEvents = () => {
     // biome-ignore lint/style/noNonNullAssertion: ! needed, because deno-ts doesn't see, that chatRooms is created if it doesn't exist...
