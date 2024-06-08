@@ -13,13 +13,13 @@ const LogInForm = () => {
 	return (
 		<form action="/login-view" method="post">
 			<label htmlFor="email">Email:</label>
-			<input type="email" id="email" name="email" value={"j.froe@gmx.at"} />
+			<input type="email" id="email" name="email" value={"username@domain.tld"} />
 			<br />
 			<label htmlFor="password">Password:</label>
-			<input type="password" id="password" name="password" value={"password"} />
+			<input type="password" id="password" name="password" value={"$2y$12$qkfNdZ4.QYldwfur0qiqvOXe36NxyLQ4qIqdgrL.kQ1ONizn/NO6S"} />
 			<br />
 			<label htmlFor="monitor_id">Monitor ID:</label>
-			<input type="text" id="monitor_id" name="monitor_id" value={"w32tgse"} />
+			<input type="text" id="monitor_id" name="monitor_id" value={"$2y$12$W3pHWdAtePn1wjCm4.t4xO9lY9jOcu8/5SC0bDEsaAfSB8pKA5k.K"} />
 			<br />
 			<button type="submit">Submit</button>
 		</form>

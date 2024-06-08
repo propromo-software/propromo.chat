@@ -106,7 +106,8 @@ export const Chat: FC<ChatProps> = ({ token, monitorId }: ChatProps) => {
     return (
     <Layout title="Login">
 			<header class="container">
-        <h1>Chat of monitor { monitorId }</h1>
+        <h1>Chat of monitor { monitorId }</h1><br></br>
+        <h2>escaped monitor-id: { encodeURIComponent(monitorId) }</h2>
 			</header>
 			<main class="container">
           <ChatForm credentials={credentials} />

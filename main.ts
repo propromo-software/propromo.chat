@@ -104,7 +104,7 @@ app.get("/chat/:monitor_id", async (c) => {
     monitor_id: payload?.monitor_id
   });
 
-  /* if (!usersChatting.includes(userPayload)) { // TODO: implement proper security
+  if (!usersChatting.includes(userPayload)) { // TODO: implement proper security
     usersChatting.push(userPayload);
   } else {
     if (DEV_MODE)
@@ -116,7 +116,7 @@ app.get("/chat/:monitor_id", async (c) => {
       "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
       401,
     );
-  } */
+  }
 
   const createEvents = () => {
     // biome-ignore lint/style/noNonNullAssertion: ! needed, because deno-ts doesn't see, that chatRooms is created if it doesn't exist...
@@ -133,6 +133,7 @@ app.get("/chat/:monitor_id", async (c) => {
         await chatRoom.onMessage(event, { email, ws });
       },
       onClose: () => {
+        usersChatting.splice(usersChatting.indexOf(userPayload), 1);
         chatRoom.onClose();
         chatRooms.delete(monitor_id);
       },
@@ -168,15 +169,14 @@ async function generateJWT(
     JOIN users u ON mu.user_id = u.id 
     JOIN monitors m ON mu.monitor_id = m.id 
     WHERE u.email = $1 
-    AND u.password = $2
-    AND m.monitor_hash = $3`,
-    [email, password, monitor_id],
-  ); */
-  const user_has_access = true; // users_that_match.rows.length === 1;
+    AND m.monitor_hash = $2`,
+    [email, monitor_id], // password
+  ); // AND u.password = $2
+  const user_has_access = users_that_match.rows.length === 1;
 
   if (!user_has_access) {
     throw new Error("Unauthorized. You do not have access to that monitor.");
-  }
+  } */
 
   const now = Math.floor(Date.now() / 1000);
   const token = await jwtSign(
