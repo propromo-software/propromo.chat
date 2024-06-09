@@ -4,20 +4,20 @@ import { ChatRoom } from "./src/controller/Chatroom.ts";
 import { home } from "./src/views/home.tsx";
 import { db } from "./src/database.ts";
 import {
+  DEV_MODE,
   JWT_PRIVATE_KEY,
   JWT_PUBLIC_KEY,
-  DEV_MODE,
   PORT,
 } from "./src/environment.ts";
 import {
-  Hono,
-  type WSContext,
   cors,
+  Hono,
   jwtSign,
   jwtVerify,
   logger,
   poweredBy,
   upgradeWebSocket,
+  type WSContext,
 } from "./deps.ts";
 import { Chat } from "./src/views/chat.tsx";
 import { render } from "./deps.ts";
@@ -53,12 +53,12 @@ const chatRooms: Map<string, ChatRoom> = new Map();
 const usersChatting: string[] = [];
 
 type JWT_PAYLOAD = {
-  monitor_id: string,
-  email: string,
-  exp: number,
-  nbf: number,
-  iat: number,
-  iss: string,
+  chats: string[];
+  email: string;
+  exp: number;
+  nbf: number;
+  iat: number;
+  iss: string;
 };
 
 app.get("/chat/:monitor_id", async (c) => {
@@ -82,7 +82,10 @@ app.get("/chat/:monitor_id", async (c) => {
   try {
     payload = await jwtVerify(auth, JWT_OPTIONS.public, JWT_OPTIONS.alg);
 
-    if (payload && (payload.monitor_id !== monitor_id || payload.iss !== "propromo.chat")) {
+    if (
+      payload &&
+      (payload.chats.includes(monitor_id) && payload.iss !== "propromo.chat")
+    ) {
       if (DEV_MODE) console.error(payload);
 
       return c.text(
@@ -101,16 +104,17 @@ app.get("/chat/:monitor_id", async (c) => {
 
   const userPayload = JSON.stringify({
     email: payload?.email,
-    monitor_id: payload?.monitor_id
+    monitor_id,
   });
 
   if (!usersChatting.includes(userPayload)) { // TODO: implement proper security
     usersChatting.push(userPayload);
   } else {
-    if (DEV_MODE)
+    if (DEV_MODE) {
       console.error(
         "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
       );
+    }
 
     return c.text(
       "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
@@ -146,7 +150,7 @@ app.get("/chat/:monitor_id", async (c) => {
     };
   };
 
-  return upgradeWebSocket(createEvents)(c, async () => { });
+  return upgradeWebSocket(createEvents)(c, async () => {});
 });
 
 /* MIDDLEWARES & ROUTES */
@@ -162,26 +166,29 @@ app.route("", home);
 async function generateJWT(
   email: string | File | (string | File)[],
   password: string | File | (string | File)[],
-  monitor_id: string | File | (string | File)[],
-): Promise<string> {
-  /* const users_that_match = await db.queryObject(
-    `SELECT user_id FROM monitor_user mu 
+): Promise<{
+  token: string;
+  chats: string[];
+}> {
+  const monitors_of_user = await db.queryObject( // TODO: password validation
+    `SELECT monitor_hash FROM monitor_user mu 
     JOIN users u ON mu.user_id = u.id 
     JOIN monitors m ON mu.monitor_id = m.id 
-    WHERE u.email = $1 
-    AND m.monitor_hash = $2`,
-    [email, monitor_id], // password
+    WHERE u.email = $1`,
+    [email], // password
   ); // AND u.password = $2
-  const user_has_access = users_that_match.rows.length === 1;
+  const user_monitors = monitors_of_user.rows as { monitor_hash: string }[];
+  const mapped_user_monitors = user_monitors.map((row) => row.monitor_hash);
+  const user_has_monitors = monitors_of_user.rows.length === 1;
 
-  if (!user_has_access) {
-    throw new Error("Unauthorized. You do not have access to that monitor.");
-  } */
+  if (!user_has_monitors) {
+    throw new Error("Unauthorized. You do not have access to any monitor!");
+  }
 
   const now = Math.floor(Date.now() / 1000);
   const token = await jwtSign(
     {
-      monitor_id,
+      chats: mapped_user_monitors,
       email,
       exp: now + 60 * 5,
       nbf: now,
@@ -192,7 +199,10 @@ async function generateJWT(
     JWT_OPTIONS.alg,
   );
 
-  return token;
+  return {
+    token,
+    chats: mapped_user_monitors,
+  };
 }
 
 /**
@@ -204,14 +214,18 @@ app.post("/login", async (c) => {
     return await c.req.parseBody().then(async (body) => {
       const email = body?.email;
       const password = body?.password;
-      const monitor_id = body?.monitor_id;
 
-      if (!email || !password || !monitor_id) {
-        throw new Error("Email, password and monitor-id are required."); // try parsing as json instead
+      if (!email || !password) {
+        throw new Error("Email and password are required."); // try parsing as json instead
       }
 
       try {
-        return c.text(await generateJWT(email, password, monitor_id));
+        const { token, chats } = await generateJWT(email, password);
+
+        return c.json({
+          token,
+          chats,
+        });
       } catch (error) {
         return c.text(error.message, 401);
       }
@@ -221,22 +235,25 @@ app.post("/login", async (c) => {
     const {
       email,
       password,
-      monitor_id,
     }: {
       email: string | undefined;
       password: string | undefined;
-      monitor_id: string | undefined;
     } = body;
 
-    if (!email || !password || !monitor_id) {
+    if (!email || !password) {
       return c.text(
-        "Email, password and monitor-id are required.", // not json and not form, just missing data
+        "Email and password are required.", // not json and not form, just missing data
         400,
       );
     }
 
     try {
-      return c.text(await generateJWT(email, password, monitor_id));
+      const { token, chats } = await generateJWT(email, password);
+
+      return c.json({
+        token,
+        chats,
+      });
     } catch (error) {
       return c.text(error.message, 401);
     }
@@ -247,7 +264,7 @@ let ChatNode = Chat({ token: "", monitorId: "" });
 app.post("/login-view", async (c) => {
   const body = await c.req.parseBody();
 
-  const response = await app.request('/login', {
+  const response = await app.request("/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -255,15 +272,13 @@ app.post("/login-view", async (c) => {
     body: JSON.stringify({
       email: body.email,
       password: body.password,
-      monitor_id: body.monitor_id
     }),
   });
 
-  const token = await response.text();
+  const { token, chats } = await response.json();
 
   if (response.ok) {
-    const monitorId = body.monitor_id as string;
-    ChatNode = Chat({ token, monitorId });
+    ChatNode = Chat({ token, monitor_id: chats[0] }); // TODO. All chats, not just the first one should be usable
 
     return c.html(ChatNode);
   }

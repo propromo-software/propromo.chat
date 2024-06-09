@@ -21,7 +21,7 @@ A chat application for Propromo.
 | **Chat Room** | `/chat/:monitor_id?auth` | The WebSocket endpoint for a specific **chat room**.                 | WS\|S | A `monitor_id` **url parameter**, and an                |
 |               |                          | **Requires** a JWT token for authentication.                         |       | `auth` **query** parameter containing the JWT token.    |
 | **Login**     | `/login`                 | The endpoint to obtain a JWT token for **authentication**.           | POST  | The request body should contain:                        |
-|               |                          | **Requires** an existing [propromo](propromo.duckdns.org) account.   |       | **email**, **password**, and **monitor_id** fields.     |
+|               |                          | **Requires** an existing [propromo](propromo.duckdns.org) account.   |       | **email** and **password**, fields.     |
 |               |                          | Tokens expire after 5 min. and can only be used once.                |       | Content type can be `application/x-www-form-urlencoded` |
 |               |                          |                                                                      |       | or `multipart/form-data` as well as `application/json`. |
 
