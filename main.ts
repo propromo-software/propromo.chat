@@ -107,7 +107,7 @@ app.get("/chat/:monitor_id", async (c) => {
     monitor_id,
   });
 
-  if (!usersChatting.includes(userPayload)) { // TODO: implement proper security
+  if (!usersChatting.includes(userPayload)) {
     usersChatting.push(userPayload);
   } else {
     if (DEV_MODE) {
@@ -177,9 +177,10 @@ async function generateJWT(
     WHERE u.email = $1`,
     [email], // password
   ); // AND u.password = $2
+
   const user_monitors = monitors_of_user.rows as { monitor_hash: string }[];
   const mapped_user_monitors = user_monitors.map((row) => row.monitor_hash);
-  const user_has_monitors = monitors_of_user.rows.length === 1;
+  const user_has_monitors = monitors_of_user.rows.length >= 1;
 
   if (!user_has_monitors) {
     throw new Error("Unauthorized. You do not have access to any monitor!");
