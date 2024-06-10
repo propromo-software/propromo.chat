@@ -210,7 +210,7 @@ async function generateJWT(
     [email],
   );
 
-  const user_monitors = monitors_of_user.rows as ChatInfo[];
+  const user_monitors = JSON.parse(JSON.stringify(monitors_of_user.rows)) as ChatInfo[];
   const user_has_monitors = monitors_of_user.rows.length >= 1;
 
   if (!user_has_monitors) {
