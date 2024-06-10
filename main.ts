@@ -20,7 +20,7 @@ import {
   type WSContext,
 } from "./deps.ts";
 import { Chat } from "./src/views/chat.tsx";
-import { render } from "./deps.ts";
+// import { render } from "./deps.ts";
 
 /* CONFIGURATION */
 const app = new Hono();
@@ -170,13 +170,14 @@ async function generateJWT(
   token: string;
   chats: string[];
 }> {
-  const monitors_of_user = await db.queryObject( // TODO: password validation
+  const monitors_of_user = await db.queryObject(
     `SELECT monitor_hash FROM monitor_user mu 
     JOIN users u ON mu.user_id = u.id 
     JOIN monitors m ON mu.monitor_id = m.id 
-    WHERE u.email = $1`,
-    [email], // password
-  ); // AND u.password = $2
+    WHERE u.email = $1
+    AND u.password = $2`,
+    [email, password],
+  );
 
   const user_monitors = monitors_of_user.rows as { monitor_hash: string }[];
   const mapped_user_monitors = user_monitors.map((row) => row.monitor_hash);
@@ -279,7 +280,7 @@ app.post("/login-view", async (c) => {
   const { token, chats } = await response.json();
 
   if (response.ok) {
-    ChatNode = Chat({ token, monitor_id: chats[0] }); // TODO. All chats, not just the first one should be usable
+    ChatNode = Chat({ token, monitorId: chats[0] }); // TODO. All chats, not just the first one should be usable
 
     return c.html(ChatNode);
   }
