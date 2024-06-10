@@ -162,13 +162,25 @@ app.use(
 );
 app.route("", home);
 
+type ChatInfo = {
+  monitor_hash: string;
+  organization_name: string;
+  type: string;
+  title: string;
+  short_description: string;
+  public: boolean;
+  created_at: Date;
+  updated_at: Date;
+  project_url: string;
+}
+
 /* AUTHENTICATION ENDPOINT */
 async function generateJWT(
   email: string | File | (string | File)[],
   password: string | File | (string | File)[],
 ): Promise<{
   token: string;
-  chats: string[];
+  chats: ChatInfo[];
 }> {
   // validate user
   const response = await fetch("https://propromo-d08144c627d3.herokuapp.com/api/v1/users/login", {
@@ -188,15 +200,17 @@ async function generateJWT(
 
   // fetch monitors
   const monitors_of_user = await db.queryObject(
-    `SELECT monitor_hash FROM monitor_user mu 
+    `SELECT monitor_hash, organization_name, type, title, short_description, public, created_at, updated_at, project_url 
+    FROM monitors WHERE monitor_hash IN (
+    SELECT monitor_hash
+    FROM monitor_user mu 
     JOIN users u ON mu.user_id = u.id 
     JOIN monitors m ON mu.monitor_id = m.id 
-    WHERE u.email = $1`,
+    WHERE u.email = $1)`,
     [email],
   );
 
-  const user_monitors = monitors_of_user.rows as { monitor_hash: string }[];
-  const mapped_user_monitors = user_monitors.map((row) => row.monitor_hash);
+  const user_monitors = monitors_of_user.rows as ChatInfo[];
   const user_has_monitors = monitors_of_user.rows.length >= 1;
 
   if (!user_has_monitors) {
@@ -206,7 +220,7 @@ async function generateJWT(
   const now = Math.floor(Date.now() / 1000);
   const token = await jwtSign(
     {
-      chats: mapped_user_monitors,
+      chats: user_monitors,
       email,
       exp: now + 60 * 5,
       nbf: now,
@@ -219,7 +233,7 @@ async function generateJWT(
 
   return {
     token,
-    chats: mapped_user_monitors,
+    chats: user_monitors,
   };
 }
 
