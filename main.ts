@@ -193,8 +193,12 @@ async function generateJWT(
       password
     }),
   });
+
+  const json = await response.json();
+
+  if (DEV_MODE) console.log(json)
   
-  if (response.status !== 200) {
+  if (!json.success) {
     throw new Error("Unauthorized. Password or email didn't pass the check!");
   }
 
@@ -212,6 +216,8 @@ async function generateJWT(
 
   const user_monitors = JSON.parse(JSON.stringify(monitors_of_user.rows)) as ChatInfo[];
   const user_has_monitors = monitors_of_user.rows.length >= 1;
+
+  if (DEV_MODE) console.log(user_monitors, email, password)
 
   if (!user_has_monitors) {
     throw new Error("Unauthorized. You do not have access to any monitor!");
