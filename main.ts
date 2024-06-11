@@ -20,6 +20,7 @@ import {
   type WSContext,
 } from "./deps.ts";
 import { Chat } from "./src/views/chat.tsx";
+import { ChatInfo, JWT_PAYLOAD } from "./src/types.ts";
 // import { render } from "./deps.ts";
 
 /* CONFIGURATION */
@@ -51,15 +52,6 @@ const JWT_OPTIONS = {
 // Maybe replace with a redis database?
 const chatRooms: Map<string, ChatRoom> = new Map();
 const usersChatting: string[] = [];
-
-type JWT_PAYLOAD = {
-  chats: ChatInfo[];
-  email: string;
-  exp: number;
-  nbf: number;
-  iat: number;
-  iss: string;
-};
 
 app.get("/chat/:monitor_id", async (c) => {
   const monitor_id = decodeURIComponent(c.req.param("monitor_id"));
@@ -160,18 +152,6 @@ app.use(
   cors(),
 );
 app.route("", home);
-
-type ChatInfo = {
-  monitor_hash: string;
-  organization_name: string;
-  type: string;
-  title: string;
-  short_description: string;
-  public: boolean;
-  created_at: Date;
-  updated_at: Date;
-  project_url: string;
-}
 
 /* AUTHENTICATION ENDPOINT */
 async function generateJWT(
@@ -301,7 +281,7 @@ app.post("/login", async (c) => {
   }
 });
 
-let ChatNode = Chat({ token: "", monitorId: "" });
+let ChatNode = Chat({ token: "", chats: [] });
 app.post("/login-view", async (c) => {
   const body = await c.req.parseBody();
 
@@ -319,15 +299,22 @@ app.post("/login-view", async (c) => {
   const { token, chats } = await response.json();
 
   if (response.ok) {
-    ChatNode = Chat({ token, monitorId: chats[0] }); // TODO. All chats, not just the first one should be usable
+    ChatNode = Chat({ token, chats });
 
-    return c.html(ChatNode);
+    return c.html(
+      `<script type="module">
+      import React from "https://esm.sh/react@19.0.0-beta-04b058868c-20240508/?dev"
+      import ReactDOMClient from "https://esm.sh/react-dom@19.0.0-beta-04b058868c-20240508/client/?dev"
+
+      window.onload = () => {
+        const rootElement = ReactDOMClient.createRoot(document.getElementById('root'));
+        rootElement.render(ChatNode);
+      };
+      </script>`
+      + ChatNode);
   }
 
   return c.text(token);
 });
 
 Deno.serve({ port: PORT, hostname: "0.0.0.0" }, app.fetch);
-
-// const root = document.getElementById('root') as HTMLElement;
-// render(ChatNode, root);

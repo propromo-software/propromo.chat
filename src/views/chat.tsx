@@ -26,11 +26,12 @@
 
 import { jsx, useState, useEffect, render, FC } from "../../deps.ts";
 import { Layout } from "./layout.tsx";
+import type { ChatInfo } from "../types.ts";
 
 interface ChatFormProps {
   credentials: {
     token: string;
-    monitorId: string;
+    monitor_hash: string;
   };
 }
 
@@ -38,7 +39,7 @@ const ChatForm: FC<ChatFormProps> = ({ credentials }) => {
   const [message, setMessage] = useState("");
   const [ws, setWs] = useState<WebSocket | null>(null);
   const token = credentials.token;
-  const monitorId = credentials.monitorId;
+  const monitorId = encodeURIComponent(credentials.monitor_hash);
 
   useEffect(() => {
     const ws = new WebSocket(`/chat/${monitorId}?auth=${token}`);
@@ -97,21 +98,31 @@ const ChatForm: FC<ChatFormProps> = ({ credentials }) => {
 
 interface ChatProps {
   token: string;
-  monitorId: string;
+  chats: ChatInfo[];
 }
 
-export const Chat: FC<ChatProps> = ({ token, monitorId }: ChatProps) => {
-    const credentials = { token, monitorId };
-
+export const Chat: FC<ChatProps> = ({ token, chats }: ChatProps) => {
     return (
     <Layout title="Login">
-			<header class="container">
-        <h1>Chat of monitor { monitorId }</h1><br></br>
-        <h2>escaped monitor-id: { encodeURIComponent(monitorId) }</h2>
-			</header>
-			<main class="container">
-          <ChatForm credentials={credentials} />
-			</main>
+      <header className="container">
+        <h1>All Chats</h1>
+      </header>
+      <main className="container">
+        {chats.map(chat => (
+          <div key={chat.monitor_hash}>
+            <h2>{chat.title}</h2>
+            <p>{chat.short_description}</p>
+            <p>Organization: {chat.organization_name}</p>
+            <p>Type: {chat.type}</p>
+            <p>Created at: {chat.created_at.toLocaleDateString()}</p>
+            <p>Updated at: {chat.updated_at.toLocaleDateString()}</p>
+            <p>Public: {chat.public ? "Yes" : "No"}</p>
+            <p>Project URL: <a href={chat.project_url} target="_blank" rel="noopener noreferrer">{chat.project_url}</a></p>
+            <ChatForm credentials={{ token, monitor_hash: chat.monitor_hash as string }} />
+            <hr />
+          </div>
+        ))}
+      </main>
 		</Layout>
     );
 }
