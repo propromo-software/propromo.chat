@@ -53,7 +53,7 @@ const chatRooms: Map<string, ChatRoom> = new Map();
 const usersChatting: string[] = [];
 
 type JWT_PAYLOAD = {
-  chats: string[];
+  chats: ChatInfo[];
   email: string;
   exp: number;
   nbf: number;
@@ -83,8 +83,7 @@ app.get("/chat/:monitor_id", async (c) => {
     payload = await jwtVerify(auth, JWT_OPTIONS.public, JWT_OPTIONS.alg);
 
     if (
-      payload &&
-      (payload.chats.includes(monitor_id) && payload.iss !== "propromo.chat")
+      !payload || !(payload.chats.some(chat => chat.monitor_hash === monitor_id) || payload.iss !== "propromo.chat")
     ) {
       if (DEV_MODE) console.error(payload);
 
@@ -150,7 +149,7 @@ app.get("/chat/:monitor_id", async (c) => {
     };
   };
 
-  return upgradeWebSocket(createEvents)(c, async () => {});
+  return upgradeWebSocket(createEvents)(c, async () => { });
 });
 
 /* MIDDLEWARES & ROUTES */
@@ -197,7 +196,7 @@ async function generateJWT(
   const json = await response.json();
 
   if (DEV_MODE) console.log(json)
-  
+
   if (!json.success) {
     throw new Error("Unauthorized. Password or email didn't pass the check!");
   }
@@ -232,7 +231,7 @@ async function generateJWT(
       nbf: now,
       iat: now,
       iss: "propromo.chat",
-    },
+    } as JWT_PAYLOAD,
     JWT_OPTIONS.secret,
     JWT_OPTIONS.alg,
   );
