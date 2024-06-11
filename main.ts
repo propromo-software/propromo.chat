@@ -259,6 +259,8 @@ app.post("/login", async (c) => {
           chats,
         });
       } catch (error) {
+        if (DEV_MODE) console.log("error at /login?form-data");
+
         return c.text(error.message, 401);
       }
     });
@@ -287,6 +289,8 @@ app.post("/login", async (c) => {
         chats,
       });
     } catch (error) {
+      if (DEV_MODE) console.log("error at /login?json");
+
       return c.text(error.message, 401);
     }
   }
