@@ -54,7 +54,7 @@ const chatRooms: Map<string, ChatRoom> = new Map();
 const usersChatting: string[] = [];
 
 app.get("/chat/:monitor_id", async (c) => {
-  const monitor_id = decodeURIComponent(c.req.param("monitor_id"));
+  const monitor_id = c.req.param("monitor_id");
   let payload: JWT_PAYLOAD | undefined;
   const auth = c.req.query("auth");
 
