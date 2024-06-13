@@ -74,6 +74,12 @@ export class ChatRoom {
 
     async onMessage(event: MessageEvent, sender?: { email: string | undefined, ws: WSContext }): Promise<void> {
         const message = event.data;
+
+        if (message === 'ping') {
+            console.log("pong");
+            return;
+        }
+
         const messageData = await this.createMessage(sender?.email ?? 'unknown@unknown.tld', message);
         const broadcastMessage = JSON.stringify(messageData);
         this.broadcast(broadcastMessage/* , sender */);
