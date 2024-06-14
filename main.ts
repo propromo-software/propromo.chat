@@ -53,64 +53,96 @@ const JWT_OPTIONS = {
 const chatRooms: Map<string, ChatRoom> = new Map();
 const usersChatting: string[] = [];
 
+function logInfo(message: string, detail: object | null = null) {
+  if (DEV_MODE) console.info(`[${new Date().toISOString()}] ${message}${detail ? ` (${JSON.stringify(detail)})` : ""}`);
+}
+
+function logError(message: string, detail: object | null = null, error: Error | null = null) {
+  if (DEV_MODE) console.error(`[${new Date().toISOString()}] ${message}${detail ? ` (${JSON.stringify(detail)}, ${JSON.stringify(error)})` : ""}`);
+}
+
 app.get("/chat/:monitor_id", async (c) => {
   const monitor_id = c.req.param("monitor_id");
   let payload: JWT_PAYLOAD | undefined;
   const auth = c.req.query("auth");
+  const token = auth ? auth?.trim() : null;
 
-  // I think this is the best solution to authenticate, after cookies, and they don't work well together with postman :/.
-  // First get a token at /login and then validate it here. The token expires after 5 minutes and can only be used once.
-  // Unlike HTTP URLs, wss: URLs are never exposed to the user.
-  // They can't bookmark them or copy-and-paste them. This minimises the risk of accidental sharing.
-  // In addition, their appearance in other web APIs is minimal [1]. For example, they won't appear in history. This reduces the risk of leakage via JS APIs.
-  // The risk is reduced even more, because the token is only valid for 5 minutes. (the connection stays open, it can only be opened only 5 minutes after token creation).
-  if (!auth || !(auth && auth?.trim()?.length > 0)) {
-    return c.text(
-      "Auth token is required. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login.",
-      401,
-    );
+  logInfo(`Path '/chat/${monitor_id}?auth=${token}' called.`, { monitor_id, token });
+
+  const authTokenIsSet = !!token;
+  const authTokenIsNotEmpty = authTokenIsSet && (token?.length > 0);
+  const detail = {
+    authTokenIsSet,
+    authTokenIsNotEmpty
+  }
+  if (!authTokenIsSet || !authTokenIsNotEmpty) {
+    logInfo("Query parameter ?auth={jwt} is not set or empty.", detail);
+
+    return c.json({
+      success: false,
+      message: "Auth token is required. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login.",
+      detail
+    }, 400);
   }
 
   try {
-    payload = await jwtVerify(auth, JWT_OPTIONS.public, JWT_OPTIONS.alg);
+    logInfo("Checking if jwt is valid.");
+    payload = await jwtVerify(token, JWT_OPTIONS.public, JWT_OPTIONS.alg);
+
+    const payloadIsSet =
+      !!payload &&
+      !!payload?.chats;
+    const payloadContainsMonitors =
+      payload &&
+      payload.chats &&
+      payload.chats.some(chat => chat.monitor_hash === monitor_id);
+    const payloadHasCorrectIssuer = payload?.iss === "propromo.chat";
+    const detail = {
+      payload,
+      payloadIsSet,
+      payloadContainsMonitors,
+      payloadHasCorrectIssuer
+    }
 
     if (
-      !payload || !(payload.chats.some(chat => chat.monitor_hash === monitor_id) || payload.iss !== "propromo.chat")
+      !payloadIsSet ||
+      !payloadContainsMonitors ||
+      !payloadHasCorrectIssuer
     ) {
-      if (DEV_MODE) console.error(payload);
+      logError("Auth token is invalid. Monitor ID does not match. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login.", detail);
 
-      return c.text(
-        "Auth token is invalid. Monitor ID does not match. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login.",
-        401,
-      );
+      return c.json({
+        success: false,
+        message: "Auth token is invalid. Monitor ID does not match. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login.",
+        detail
+      }, 401);
     }
   } catch (error) {
-    if (DEV_MODE) console.error(error);
+    logError("Auth token is invalid. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login.", detail, error);
 
-    return c.text(
-      `Auth token is invalid. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login. (${error})`,
-      401,
-    );
+    return c.json({
+      success: false,
+      message: "Auth token is invalid. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get one at /login.",
+      detail,
+      error
+    }, 401);
   }
 
   const userPayload = JSON.stringify({
-    email: payload?.email,
-    monitor_id,
+    email: payload?.email as string,
+    monitor_id
   });
 
   if (!usersChatting.includes(userPayload)) {
     usersChatting.push(userPayload);
   } else {
-    if (DEV_MODE) {
-      console.error(
-        "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
-      );
-    }
+    logError("Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.");
 
-    return c.text(
-      "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
-      401,
-    );
+    return c.json({
+      success: false,
+      message: "Auth token was already used. /chat/:monitor_id?auth=<YOUR_AUTH_TOKEN>. Get your own at /login.",
+      detail
+    }, 403);
   }
 
   const createEvents = () => {
@@ -119,12 +151,20 @@ app.get("/chat/:monitor_id", async (c) => {
     const email = payload?.email;
 
     if (!chatRoom) {
+      logInfo("Creating new chatroom.", { monitor_id });
+
       chatRoom = new ChatRoom(monitor_id);
       chatRooms.set(monitor_id, chatRoom);
     }
 
     return {
       onMessage: async (event: MessageEvent, ws: WSContext) => {
+        const messageWithoutSpaces = event.data.replace(/\s+/g, '');
+        if (messageWithoutSpaces != "propromo.chat({event:\"ping\",action:\"pong\"})" &&
+          messageWithoutSpaces != "propromo.chat({event:\"pong\",action:\"ping\"})") {
+          logInfo(`Received message from ${email} in ${monitor_id}.`, { ws, message: event.data });
+        }
+
         await chatRoom.onMessage(event, { email, ws });
       },
       onClose: () => {
@@ -161,7 +201,8 @@ async function generateJWT(
   token: string;
   chats: ChatInfo[];
 }> {
-  // validate user
+  logInfo("Logging in, validating user credentials.", { email, password });
+
   const response = await fetch("https://propromo-d08144c627d3.herokuapp.com/api/v1/users/login", {
     method: "POST",
     headers: {
@@ -174,10 +215,10 @@ async function generateJWT(
   });
 
   const json = await response.json();
-
-  if (DEV_MODE) console.log(json)
+  logInfo("Login response: ", json);
 
   if (!json.success) {
+    logError("Unauthorized. Password or email didn't pass the check!", json);
     throw new Error("Unauthorized. Password or email didn't pass the check!");
   }
 
@@ -195,10 +236,15 @@ async function generateJWT(
 
   const user_monitors = JSON.parse(JSON.stringify(monitors_of_user.rows)) as ChatInfo[];
   const user_has_monitors = monitors_of_user.rows.length >= 1;
+  const detail = {
+    user_monitors,
+    user_has_monitors
+  }
 
-  if (DEV_MODE) console.log(user_monitors, email, password)
+  logInfo("User monitors: ", detail);
 
   if (!user_has_monitors) {
+    logError("Unauthorized. You do not have access to any monitor!", detail);
     throw new Error("Unauthorized. You do not have access to any monitor!");
   }
 
@@ -216,38 +262,68 @@ async function generateJWT(
     JWT_OPTIONS.alg,
   );
 
+  logInfo("Token generated. ", { token });
+
   return {
     token,
     chats: user_monitors,
   };
 }
 
+async function validateCredentials(
+  email: string | File | (string | File)[] | undefined,
+  password: string | File | (string | File)[] | undefined,
+  dataFormat: "form-data" | "json",
+  c: any) {
+  if (!email || !password) {
+    if (dataFormat === "json") {
+      logError("Email and password are required in the json request body.", { email, password });
+
+      return c.json({
+        success: false,
+        message: "Email and password are required.",
+        detail: { email, password }
+      }, 400);
+    }
+
+    throw new Error("Trying to parse the request body as json instead.");
+  }
+
+  try {
+    logInfo("Login endpoint, validating user credentials. Generating JWT.", { email, password });
+    const { token, chats } = await generateJWT(email as string, password as string);
+
+    return c.json({
+      token,
+      chats
+    });
+  } catch (error) {
+    if (dataFormat === "json") {
+      logError(`Error at /login?${dataFormat}.`, { email, password }, error);
+
+      return c.json({
+        success: false,
+        message: "Email and/or password is invalid.",
+        detail: { email, password },
+        error
+      }, 401);
+    }
+
+    throw new Error("Trying to parse the request body as json instead.");
+  }
+}
+
 /**
  * Supports form data with content-type: application/x-www-form-urlencoded or multipart/form-data as well as application/json as response body.
  */
 app.post("/login", async (c) => {
-  try {
+  try { // On Error, trying to parse json instead...
     // only works if sent by a form, not if form is simulated with FormData as body and content-type: application/x-www-form-urlencoded or multipart/form-data
     return await c.req.parseBody().then(async (body) => {
       const email = body?.email;
       const password = body?.password;
 
-      if (!email || !password) {
-        throw new Error("Email and password are required."); // try parsing as json instead
-      }
-
-      try {
-        const { token, chats } = await generateJWT(email, password);
-
-        return c.json({
-          token,
-          chats,
-        });
-      } catch (error) {
-        if (DEV_MODE) console.log("error at /login?form-data");
-
-        return c.text(error.message, 401);
-      }
+      return await validateCredentials(email, password, "form-data", c);
     });
   } catch {
     const body = await c.req.json();
@@ -259,30 +335,13 @@ app.post("/login", async (c) => {
       password: string | undefined;
     } = body;
 
-    if (!email || !password) {
-      return c.text(
-        "Email and password are required.", // not json and not form, just missing data
-        400,
-      );
-    }
-
-    try {
-      const { token, chats } = await generateJWT(email, password);
-
-      return c.json({
-        token,
-        chats,
-      });
-    } catch (error) {
-      if (DEV_MODE) console.log("error at /login?json");
-
-      return c.text(error.message, 401);
-    }
+    return await validateCredentials(email, password, "json", c);
   }
 });
 
 let ChatNode = Chat({ token: "", chats: [] });
 app.post("/login-view", async (c) => {
+  logInfo("Rendering login view.");
   const body = await c.req.parseBody();
 
   const response = await app.request("/login", {
@@ -299,6 +358,7 @@ app.post("/login-view", async (c) => {
   const { token, chats } = await response.json();
 
   if (response.ok) {
+    logInfo("Login successful. Rendering chat view.", { email: body.email, password: body.password });
     ChatNode = Chat({ token, chats });
 
     return c.html(
@@ -314,7 +374,13 @@ app.post("/login-view", async (c) => {
       + ChatNode);
   }
 
-  return c.text(token);
+  logError("Error at /login-view.", { email: body.email, password: body.password });
+
+  return c.json({
+    success: false,
+    message: "Error at /login-view.",
+    detail: { email: body.email, password: body.password },
+  });
 });
 
 Deno.serve({ port: PORT, hostname: "0.0.0.0" }, app.fetch);

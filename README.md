@@ -107,3 +107,19 @@ openssl x509 -in private.pem -pubkey -noout > public.pem
 ```bash
 openssl rand -base64 32
 ```
+
+### Authentication
+
+Why is the query parameter used for authentication?  
+The problem: Websockets are not built with much security in mind.
+
+I think this is the best solution to authenticate, after cookies, and they don't work well together with some clients like postman :/.  
+First get a token at /login and then validate it here. The token expires after 5 minutes and can only be used once.
+Unlike HTTP URLs, wss: URLs are never exposed to the user.
+
+* Users can't bookmark them or copy-and-paste them. This minimizes the risk of accidental sharing.
+* In addition, their appearance in other web APIs is minimal.
+  * For example, they won't appear in history. This reduces the risk of leakage via JS APIs.
+* The risk is reduced even more, because the token is only valid for 5 minutes. (_the connection stays open, it can only be opened only 5 minutes after token creation_).
+
+When it comes to authentication for Websockets, every solution you choose has its own trade-offs.

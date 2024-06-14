@@ -24,7 +24,7 @@
 */
 
 
-import { jsx, useState, useEffect, render, FC } from "../../deps.ts";
+import { jsx, useState, useEffect, /* render, */ FC } from "../../deps.ts";
 import { Layout } from "./layout.tsx";
 import type { ChatInfo } from "../types.ts";
 
@@ -77,7 +77,7 @@ const ChatForm: FC<ChatFormProps> = ({ credentials }) => {
 
     return (
     <form onSubmit={handleSubmit}>
-      <p style={{ textAlign: "right" }}><b><strong>token</strong> used:</b> {token}</p>
+      {/* <p style={{ textAlign: "right" }}><b><strong>token</strong> used:</b> {token}</p> */}
       <label htmlFor="message">Message:</label>
       <input
         type="text"
@@ -114,8 +114,8 @@ export const Chat: FC<ChatProps> = ({ token, chats }: ChatProps) => {
             <p>{chat.short_description}</p>
             <p>Organization: {chat.organization_name}</p>
             <p>Type: {chat.type}</p>
-            <p>Created at: {chat.created_at.toLocaleDateString()}</p>
-            <p>Updated at: {chat.updated_at.toLocaleDateString()}</p>
+            <p>Created at: {new Date(chat.created_at).toLocaleDateString()}</p>
+            <p>Updated at: {new Date(chat.updated_at).toLocaleDateString()}</p>
             <p>Public: {chat.public ? "Yes" : "No"}</p>
             <p>Project URL: <a href={chat.project_url} target="_blank" rel="noopener noreferrer">{chat.project_url}</a></p>
             <ChatForm credentials={{ token, monitor_hash: chat.monitor_hash as string }} />

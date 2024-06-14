@@ -75,9 +75,12 @@ export class ChatRoom {
     async onMessage(event: MessageEvent, sender?: { email: string | undefined, ws: WSContext }): Promise<void> {
         const message = event.data;
 
-        if (message === 'ping') {
-            console.log("pong");
+        const messageWithoutSpaces = message.replace(/\s+/g, '');
+        if (messageWithoutSpaces === 'propromo.chat({event:"ping",action:"pong"})') {
             sender?.ws?.send("pong");
+            return;
+        } else if (messageWithoutSpaces === 'propromo.chat({event:"pong",action:"ping"})') {
+            sender?.ws?.send("ping");
             return;
         }
 

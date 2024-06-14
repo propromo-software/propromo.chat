@@ -1,6 +1,6 @@
 {
 	"tasks": {
-		"start": "deno run --allow-net --allow-read --allow-env main.ts",
+		"start": "deno run --allow-net --allow-read --allow-env --allow-run main.ts",
 		"dev": "deno task start:database && deno task start:chat-storage",
 		"create:database": "docker-compose -f postgres.yml up -d",
 		"fill:database": "echo goto propromo.rest and execute fill:db",
