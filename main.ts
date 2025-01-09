@@ -16,6 +16,7 @@ import {
   jwtVerify,
   logger,
   poweredBy,
+  swaggerUI,
   upgradeWebSocket,
   type WSContext,
 } from "./deps.ts";
@@ -382,5 +383,7 @@ app.post("/login-view", async (c) => {
     detail: { email: body.email, password: body.password },
   });
 });
+
+// app.get('/swagger', swaggerUI({ url: '/doc' }));
 
 Deno.serve({ port: PORT, hostname: "0.0.0.0" }, app.fetch);
