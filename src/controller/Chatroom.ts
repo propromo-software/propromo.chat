@@ -1,9 +1,12 @@
-import { type WSContext, parseURL, connect, v5 } from "../../deps.ts";
-import { CHAT_STORAGE_URL } from "../environment.ts";
+import { type WSContext, Redis, v5 } from "../../deps.ts";
+import { CHAT_STORAGE_URL, CHAT_STORAGE_TOKEN } from "../environment.ts";
 
 const { generate } = v5;
-const redisOptions = parseURL(CHAT_STORAGE_URL as string);
-const redis = await connect(redisOptions);
+
+const redis = new Redis({
+    url: CHAT_STORAGE_URL,
+    token: CHAT_STORAGE_TOKEN,
+})
 
 export class ChatRoom {
     constructor(monitor_id: string) {
@@ -17,15 +20,9 @@ export class ChatRoom {
     messagesKey: string;
 
     async createMessage(email: string, message: string) {
-        const NAMESPACE_URL = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
-        // The UUID RFC pre-defines four namespaces: https://www.rfc-editor.org/rfc/rfc4122
-        // NameSpace_DNS: {6ba7b810-9dad-11d1-80b4-00c04fd430c8}
-        // NameSpace_URL: {6ba7b811-9dad-11d1-80b4-00c04fd430c8}
-        // NameSpace_OID: {6ba7b812-9dad-11d1-80b4-00c04fd430c8}
-        // NameSpace_X500:{6ba7b814-9dad-11d1-80b4-00c04fd430c8}
-
+        const NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
         const messageBytes = new TextEncoder().encode(message);
-        const messageId = await generate(NAMESPACE_URL, messageBytes);
+        const messageId = await generate(NAMESPACE, messageBytes);
         const messageData = {
             email,
             timestamp: new Date().toISOString(),
@@ -33,7 +30,7 @@ export class ChatRoom {
         };
 
         return {
-            messageId,
+            messageId: messageId.toString(),
             ...messageData
         }
     }
@@ -45,20 +42,21 @@ export class ChatRoom {
             timestamp: string;
             text: string;
         }) {
-
-        await redis.hset(this.messagesKey, messageId, JSON.stringify(messageData));
+        
+        await redis.set(`${this.messagesKey}:${messageId}`, JSON.stringify(messageData));
     }
 
     async loadMessages(): Promise<{ id: string; email: string; timestamp: string; text: string }[]> {
-        const messageIds = await redis.hkeys(this.messagesKey);
+        const keys = await redis.keys(`${this.messagesKey}:*`);
         const messages: { id: string; email: string; timestamp: string; text: string }[] = [];
 
-        for (const messageId of messageIds) {
-            const messageJson = await redis.hget(this.messagesKey, messageId);
+        for (const key of keys) {
+            const messageJson = await redis.get(key);
+            const messageId = key.split(':').pop() || '';
 
             if (messageJson) {
-                const messageData = JSON.parse(messageJson);
-                messages.push(messageData);
+                const messageData = JSON.parse(JSON.stringify(messageJson));
+                messages.push({ id: messageId, ...messageData });
             }
         }
         return messages;

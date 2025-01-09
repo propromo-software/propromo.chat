@@ -16,7 +16,7 @@ import {
   jwtVerify,
   logger,
   poweredBy,
-  swaggerUI,
+  //  swaggerUI,
   upgradeWebSocket,
   type WSContext,
 } from "./deps.ts";

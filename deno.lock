@@ -3,7 +3,8 @@
   "packages": {
     "specifiers": {
       "npm:@hono/swagger-ui": "npm:@hono/swagger-ui@0.4.1_hono@4.6.3",
-      "npm:@types/node": "npm:@types/node@18.16.19"
+      "npm:@types/node": "npm:@types/node@18.16.19",
+      "npm:@upstash/redis": "npm:@upstash/redis@1.34.3"
     },
     "npm": {
       "@hono/swagger-ui@0.4.1_hono@4.6.3": {
@@ -14,6 +15,16 @@
       },
       "@types/node@18.16.19": {
         "integrity": "sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==",
+        "dependencies": {}
+      },
+      "@upstash/redis@1.34.3": {
+        "integrity": "sha512-VT25TyODGy/8ljl7GADnJoMmtmJ1F8d84UXfGonRRF8fWYJz7+2J6GzW+a6ETGtk4OyuRTt7FRSvFG5GvrfSdQ==",
+        "dependencies": {
+          "crypto-js": "crypto-js@4.2.0"
+        }
+      },
+      "crypto-js@4.2.0": {
+        "integrity": "sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==",
         "dependencies": {}
       },
       "hono@4.6.3": {
